@@ -1,0 +1,33 @@
+.env
+.env.*
+venv/
+__pycache__/
+.DS_Store
+*.pyc
+*.db
+rag_local.db
+uploaded_files/
+logs/
+*.log
+
+# macOS system files
+.DS_Store
+__MACOSX/
+
+# Local ML / ONNX models
+models/
+*.onnx
+
+# HuggingFace / tokenizer artifacts
+tokenizer.json
+tokenizer_config.json
+special_tokens_map.json
+config.json
+*.wav
+*.docx
+*.pdf
+
+# SentenceTransformers / reranker cache
+sentence_transformers/
+flashrank/
+cookies.txt

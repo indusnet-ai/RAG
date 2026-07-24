@@ -1,0 +1,84 @@
+# [file name]: config.yaml
+# [file content begin]
+# Model Configuration for RAG System
+# Supports automatic fallback from OpenAI to Ollama
+
+models:
+  # Primary LLM Configuration (OpenAI)
+  primary_llm:
+    provider: "openai"
+    model_name: "gpt-4.1"
+    api_key_env: "OPENAI_API_KEY"  # Environment variable name
+    base_url: null  # Uses default OpenAI URL
+    temperature: 0.3
+    max_tokens: 32768
+    streaming: true
+    priority: 1
+    
+  # Fallback LLM Configuration (Ollama)
+  fallback_llm:
+    provider: "ollama"
+    model_name: "llama3:latest"
+    api_key_env: null  # Ollama doesn't need API key
+    base_url: "http://localhost:11434"  # Default Ollama URL
+    temperature: 0.3
+    max_tokens: 4096
+    streaming: true
+    priority: 2
+
+embeddings:
+  # Primary Embedding Model (OpenAI)
+  primary_embedding:
+    provider: "openai"
+    model_name: "text-embedding-3-large"
+    api_key_env: "OPENAI_API_KEY"
+    dimension: 3072
+    priority: 1
+    
+  # Fallback Embedding Model (Local - FastEmbed BAAI/bge-large-en-v1.5)
+  fallback_embedding:
+    provider: "fastembed"
+    model_name: "BAAI/bge-large-en-v1.5"  # Using the model you wanted
+    api_key_env: null
+    dimension: 1024  # BAAI/bge-large-en-v1.5 has 1024 dimensions
+    priority: 2
+
+# Script Generator Models
+script_generator:
+  openai_model: "gpt-4.1"
+  ollama_model: "llama3:latest"
+
+# Retry and Fallback Configuration
+retry_config:
+  max_retries: 3
+  auto_fallback: true
+  retry_delay: 1  # seconds
+  fallback_on_quota_error: true
+  fallback_on_missing_key: true
+  fallback_on_connection_error: true
+
+# RAG Configuration
+rag_config:
+  # max_chunks: 8
+  # max_context_chars: 4000
+  # top_k: 10                    # Fetch 10 from vector search
+  # rerank_top_n: 5              # Rerank to best 5
+  similarity_threshold: 0.7
+  enable_document_filtering: false
+
+# OCR Configuration
+ocr:
+  provider: "openai"  # Only OpenAI supports vision currently
+  model: "gpt-4o"
+
+rag_config:
+  enable_hybrid_search: true          # ✅ Set to true to enable
+  hybrid_weights:
+    semantic: 0.6                     # 60% semantic (vector)
+    keyword: 0.4                      # 40% keyword (BM25)
+
+# Logging
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+# [file content end]

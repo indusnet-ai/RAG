@@ -1,0 +1,16 @@
+{
+  "expected_sections": 9,
+  "covered_sections": 9,
+  "coverage_score": 100.0,
+  "details": {
+    "Standard RAG": true,
+    "DeepRAG": true,
+    "MA-RAG": true,
+    "Corrective RAG": true,
+    "Speculative RAG": true,
+    "Fusion RAG": true,
+    "RAG-Gym": true,
+    "Modular RAG": true,
+    "SAM-RAG": true
+  }
+}

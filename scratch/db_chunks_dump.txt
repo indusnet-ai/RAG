@@ -1,0 +1,248 @@
+=== CHUNK 0 ===
+THE RAG REPORT                                                         VOL · 01 / 2026
+
+                    ——                 A FIELD GUIDE                 ——
+
+Nine RAG
+Architectures,
+Compared.
+      From Standard to Multimodal — a
+  practitioner's guide to when each
+architecture earns its place in production.
+
+INSIDE THIS GUIDE
+
+01 Standard RAG            02 DeepRAG            03 MA-RAG
+04 Corrective RAG          05 Speculative RAG    06 Fusion RAG
+
+07 RAG-Gym                08 Modular RAG        09 SAM-RAG
+
+=== CHUNK 1 ===
+01 / 09   BEGINNER
+
+Standard RAG
+
+●PIPELINE
+01     User Query
+
+02    Query Processing
+
+03     Retrieval
+
+04    Document Selection
+
+05    Context Integration
+
+06    LLM Response
+
+
+
+★ TIP
+Start with smaller chunk sizes (256-512 tokens) and experiment with overlap to improve coverage without overwhelming the context window.
+
+
+► WHEN TO USE
+Best for straightforward fact retrieval where accuracy matters but complexity is low.
+
+
+♦ EXAMPLE
+FAQ bots that surface up-to-date company policies or knowledge base entries.
+
+=== CHUNK 2 ===
+Follow Chandra for More                                      Repost to help others in your network
+
+=== CHUNK 3 ===
+Follow Chandra for More                                      Repost to help others in your network
+
+=== CHUNK 4 ===
+04 / 09   ADVANCED
+
+Corrective RAG
+
+●PIPELINE
+01     User Query
+
+02    Initial Response
+
+03    Error Detection
+
+04    Retrieval
+
+05     Response Correction
+
+06     Final Response
+
+
+
+★ TIP
+Use a lightweight verification loop — either a separate classifier or an auxiliary LLM — to flag uncertain segments and trigger corrective retrieval.
+
+
+► WHEN TO USE
+Suitable when outputs must be double-checked before being shown to the user.
+
+
+♦ EXAMPLE
+Clinical decision-support assistants that cross-verify against trusted medical literature.
+
+=== CHUNK 5 ===
+Follow Chandra for More                                      Repost to help others in your network
+
+=== CHUNK 6 ===
+Follow Chandra for More                                      Repost to help others in your network
+
+=== CHUNK 7 ===
+Follow Chandra for More                                      Repost to help others in your network
+
+=== CHUNK 8 ===
+Follow Chandra for More                                      Repost to help others in your network
+
+=== CHUNK 9 ===
+Follow Chandra for More                                      Repost to help others in your network
+
+=== CHUNK 10 ===
+GET HIRED
+The only bundle you'll ever need.
+
+Stop scattered prep. Start structured learning.
+13 modules · 645 questions · built for AI engineers
+
+Link of Bundle in caption
+
+=== CHUNK 11 ===
+THAT'S A WRAP
+Build smarter RAG systems.
+Follow for plain-english breakdowns of
+RAG, agents, and the AI stack — shipped weekly.
+
+Chandra
+@chandrasekhar
+
+Follow on LinkedIn
+
+=== CHUNK 12 ===
+THE RAG REPORT                                           VOL · 01 / 2026
+
+
+                A FIELD GUIDE
+
+Nine RAG Architectures, Compared.
+  From Standard to Multimodal — a
+practitioner's guide to when each
+architecture earns its place in production.
+
+
+INSIDE THIS GUIDE
+01 Standard RAG            02 DeepRAG             03 MA-RAG
+04 Corrective RAG          05 Speculative RAG     06 Fusion RAG
+07 RAG-Gym                08 Modular RAG          09 SAM-RAG
+
+=== CHUNK 13 ===
+01 / 09  BEGINNER
+
+Standard RAG
+
+PIPELINE
+01  User Query
+02  Query Processing
+03  Retrieval
+04  Document Selection
+05  Context Integration
+06  LLM Response
+
+
+TIP
+Start with smaller chunk sizes (256–512 tokens) and experiment
+with overlap to improve coverage without overwhelming the
+context window.
+
+
+WHEN TO USE
+Best for straightforward fact
+retrieval where accuracy
+matters but complexity is low.
+
+
+EXAMPLE
+FAQ bots that surface up-to-
+date company policies or
+knowledge base entries.
+
+=== CHUNK 14 ===
+Follow Chandra for More                                      Repost to help others in your network
+
+=== CHUNK 15 ===
+Follow Chandra for More                                      Repost to help others in your network
+
+=== CHUNK 16 ===
+04 / 09  ADVANCED
+
+Corrective RAG
+
+PIPELINE
+01  User Query
+02  Initial Response
+03  Error Detection
+04  Retrieval
+05  Response Correction
+06  Final Response
+
+
+TIP
+Use a lightweight verification loop — either a separate classifier or
+an auxiliary LLM — to flag uncertain segments and trigger
+corrective retrieval.
+
+
+WHEN TO USE
+Suitable when outputs must be double-checked before
+being shown to the user.
+
+
+EXAMPLE
+Clinical decision-support
+assistants that cross-verify
+against trusted medical
+literature.
+
+=== CHUNK 17 ===
+Follow Chandra for More                                      Repost to help others in your network
+
+=== CHUNK 18 ===
+Follow Chandra for More                                      Repost to help others in your network
+
+=== CHUNK 19 ===
+Follow Chandra for More                                      Repost to help others in your network
+
+=== CHUNK 20 ===
+Follow Chandra for More                                      Repost to help others in your network
+
+=== CHUNK 21 ===
+Follow Chandra for More                                      Repost to help others in your network
+
+=== CHUNK 22 ===
+GET HIRED
+
+The only bundle
+you'll ever need.
+
+[Image of screen showing: aiinterviewbundle.com AI INTERVIEW BUNDLE AI Interview Master Bundle 13 Modules · 645 Questions · One Structured Path 13 MODULES 645 QUESTIONS 1 BUNDLE Chandra Sekhar AI Engineer & Educator GET THE BUNDLE →]
+
+Stop scattered prep. Start structured learning.
+13 modules · 645 questions · built for AI engineers
+
+🔗 Link of Bundle in caption
+
+=== CHUNK 23 ===
+THAT'S A WRAP
+
+Build smarter RAG systems.
+
+Follow for plain-english breakdowns of RAG, agents, and the AI stack — shipped weekly.
+
+[Image of Chandra's photo]
+Chandra
+@chandrasekhar
+
+Follow on LinkedIn →
+

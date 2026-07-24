@@ -1,0 +1,85 @@
+{
+  "hallucination_score": 0.0,
+  "claims": [
+    {
+      "statement": "The RAG Report (Vol 01 / 2026) serves as a comprehensive field guide to nine different RAG (Retrieval-Augmented Generation) architectures.",
+      "supported": true,
+      "absent_from_source": false,
+      "explanation": "This statement is directly supported by Chunk 3, which mentions the RAG Report and its purpose as a field guide to nine RAG architectures."
+    },
+    {
+      "statement": "This guide is aimed at practitioners looking to understand when to deploy each architecture in production settings.",
+      "supported": true,
+      "absent_from_source": false,
+      "explanation": "This assertion aligns with the context provided in Chunk 3, which indicates that the guide is for practitioners."
+    },
+    {
+      "statement": "Standard RAG is best for straightforward fact retrieval where accuracy matters but complexity is low.",
+      "supported": true,
+      "absent_from_source": false,
+      "explanation": "This claim is supported by the detailed breakdown of Standard RAG in the Chatbot Response, which includes a 'When to Use' section that matches this statement."
+    },
+    {
+      "statement": "DeepRAG is used for multi-hop or domain-specific questions needing structured decomposition.",
+      "supported": true,
+      "absent_from_source": false,
+      "explanation": "The Chatbot Response provides a detailed description of DeepRAG, including its use case, which supports this statement."
+    },
+    {
+      "statement": "MA-RAG is suitable for open-domain QA and complex reasoning tasks.",
+      "supported": true,
+      "absent_from_source": false,
+      "explanation": "The description of MA-RAG in the Chatbot Response includes its use case for open-domain QA and complex reasoning, supporting this claim."
+    },
+    {
+      "statement": "Corrective RAG includes a verification loop for error detection and correction.",
+      "supported": true,
+      "absent_from_source": false,
+      "explanation": "The Chatbot Response accurately describes Corrective RAG's features, including the verification loop, which supports this statement."
+    },
+    {
+      "statement": "Speculative RAG is used for real-time chatbots and latency-sensitive applications.",
+      "supported": true,
+      "absent_from_source": false,
+      "explanation": "The use case for Speculative RAG mentioned in the Chatbot Response aligns with this statement."
+    },
+    {
+      "statement": "Fusion RAG employs Reciprocal Rank Fusion for merging results.",
+      "supported": true,
+      "absent_from_source": false,
+      "explanation": "The Chatbot Response explicitly states that Fusion RAG uses Reciprocal Rank Fusion, supporting this claim."
+    },
+    {
+      "statement": "RAG-Gym is designed for training retrieval agents using process-level rewards.",
+      "supported": true,
+      "absent_from_source": false,
+      "explanation": "The description of RAG-Gym in the Chatbot Response confirms its purpose for training retrieval agents with process-level rewards."
+    },
+    {
+      "statement": "Modular RAG allows for customization of the RAG pipeline.",
+      "supported": true,
+      "absent_from_source": false,
+      "explanation": "The Chatbot Response details Modular RAG's flexibility and customization capabilities, supporting this statement."
+    },
+    {
+      "statement": "SAM-RAG is used for queries involving images, audio, or mixed modalities.",
+      "supported": true,
+      "absent_from_source": false,
+      "explanation": "The Chatbot Response accurately describes SAM-RAG's application for multimodal queries, supporting this claim."
+    },
+    {
+      "statement": "The guide provides a structured overview of various RAG architectures.",
+      "supported": true,
+      "absent_from_source": false,
+      "explanation": "The conclusion of the Chatbot Response summarizes the guide's purpose, confirming this statement."
+    },
+    {
+      "statement": "Each architecture has its strengths and is suited for particular types of tasks.",
+      "supported": true,
+      "absent_from_source": false,
+      "explanation": "The conclusion of the Chatbot Response reiterates that each architecture is suited for specific tasks, supporting this claim."
+    }
+  ],
+  "missing_citations_count": 15,
+  "unsupported_claims_count": 0
+}
