@@ -390,7 +390,7 @@ class DocumentProcessor:
             
             # Check if text is just boilerplate/footer
             is_boilerplate = any(w in txt for w in ["Follow Chandra", "Repost to help", "GET HIRED", "THAT'S A WRAP"])
-            if len(txt) >= 150 and not is_boilerplate:
+            if len(txt) >= 30 and not is_boilerplate:
                 # TEXT PAGE
                 text_pages[page_idx + 1] = {
                     "text": txt,

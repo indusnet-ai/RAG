@@ -184,6 +184,12 @@ async def delete_document_by_collection(
             raise HTTPException(500, f"Error soft deleting document: {str(db_error)}")
 
         try:
+            # ⚡ CLEAR QUERY CACHE FOR COLLECTION (INVALIDATE STALE CACHE ON DELETE)
+            try:
+                db.execute(text("DELETE FROM query_cache WHERE collection_id = :cid"), {"cid": str(collection_id)})
+            except Exception as cache_err:
+                logger.warning(f"⚠️ Cache clear error on document delete: {cache_err}")
+
             db.commit()
             track_document_deleted()
             logger.info(f"Successfully soft deleted document {document_id} and {deleted_chunks} chunks from collection {collection_name}")

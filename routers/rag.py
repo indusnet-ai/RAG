@@ -316,6 +316,34 @@ async def stream_rag_query(
             collection_id = str(collection_row.id)
             current_chat_title = collection_row.chat_title
             logger.info(f"✅ Collection: {collection_id}, chat_title: {current_chat_title}")
+
+            # ⚡ QUERY CACHE LOOKUP
+            import hashlib
+            q_hash = hashlib.md5(f"{collection_id}:{req.query.strip().lower()}".encode('utf-8')).hexdigest()
+            try:
+                cache_row = db.execute(text("""
+                    SELECT response_text, sources_used, reference_map FROM query_cache
+                    WHERE collection_id = :cid AND query_hash = :hash
+                """), {"cid": collection_id, "hash": q_hash}).fetchone()
+                
+                if cache_row:
+                    logger.info(f"⚡ QUERY CACHE HIT for query: '{req.query[:40]}...'")
+                    db.execute(text("""
+                        UPDATE query_cache SET hit_count = hit_count + 1 WHERE collection_id = :cid AND query_hash = :hash
+                    """), {"cid": collection_id, "hash": q_hash})
+                    db.commit()
+
+                    cached_resp = cache_row.response_text
+                    words = re.split(r'(\s+)', cached_resp)
+                    for word in words:
+                        yield f"{json.dumps({'type': 'chunk', 'content': word})}\n"
+                    
+                    cached_sources = json.loads(cache_row.sources_used) if cache_row.sources_used else []
+                    cached_ref_map = json.loads(cache_row.reference_map) if cache_row.reference_map else {}
+                    yield f"{json.dumps({'type': 'sources', 'sources_used': cached_sources, 'reference_map': cached_ref_map})}\n"
+                    return
+            except Exception as cache_err:
+                logger.warning(f"⚠️ Cache check error: {cache_err}")
  
             # ✅ CALCULATE HYBRID DYNAMIC TOP_K (CHUNKS + SOURCES)
             dynamic_top_k = calculate_dynamic_top_k(
@@ -569,6 +597,26 @@ async def stream_rag_query(
                     "ref_map": json.dumps(reference_map)
                 })
                 db.commit()
+                
+                # ⚡ SAVE TO QUERY CACHE
+                try:
+                    db.execute(text("""
+                        INSERT INTO query_cache (id, collection_id, user_id, query_hash, query_text, response_text, sources_used, reference_map)
+                        VALUES (:id, :cid, :uid, :hash, :qtext, :resp, :sources, :ref_map)
+                    """), {
+                        "id": str(uuid4()),
+                        "cid": collection_id,
+                        "uid": user_uuid,
+                        "hash": q_hash,
+                        "qtext": req.query,
+                        "resp": clean_response,
+                        "sources": json.dumps(sources_used),
+                        "ref_map": json.dumps(reference_map)
+                    })
+                    db.commit()
+                    logger.info(f"⚡ Saved query to cache: '{req.query[:40]}...'")
+                except Exception as cache_save_err:
+                    logger.warning(f"⚠️ Query cache save error: {cache_save_err}")
                 
                 # Track metrics
                 duration = time.time() - start_time

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends, Body, Query
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends, Body, Query, BackgroundTasks
 from uuid import uuid4
 import os
 import shutil
@@ -23,6 +23,40 @@ from services.metrics import (
 import time
 router = APIRouter(tags=["Source Upload"])
 UPLOAD_STORAGE_DIR = Path("uploaded_files")
+
+@router.get("/jobs/{job_id}")
+async def get_job_status(
+    job_id: str,
+    current_user=Depends(get_current_user),
+    db=Depends(get_db)
+):
+    """
+    ⚡ Check Async Upload Job Status & Progress
+    """
+    try:
+        user_uuid = str(current_user.id)
+        row = db.execute(text("""
+            SELECT id, collection_id, file_name, status, progress_pct, total_chunks, error_message, created_at, updated_at
+            FROM jobs WHERE id = :jid AND user_id = :uid
+        """), {"jid": job_id, "uid": user_uuid}).fetchone()
+
+        if not row:
+            raise HTTPException(status_code=404, detail="Job not found")
+
+        return {
+            "job_id": str(row.id),
+            "collection_id": str(row.collection_id),
+            "file_name": row.file_name,
+            "status": row.status,
+            "progress_pct": row.progress_pct,
+            "total_chunks": row.total_chunks,
+            "error_message": row.error_message,
+            "created_at": str(row.created_at),
+            "updated_at": str(row.updated_at)
+        }
+    except Exception as e:
+        logger.error(f"Error fetching job status: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 logging.basicConfig(
     level=logging.INFO,
@@ -143,6 +177,7 @@ def get_file_type(filename: str) -> str:
 
 @router.post("/upload")
 async def upload_documents(
+    background_tasks: BackgroundTasks,
     collection_name: str = Form(..., description="Collection to add files to"),
     files: List[UploadFile] = File(..., description="Files to upload"),
     language: str = Form("en-IN", description="Language for audio transcription (e.g., en-IN, hi-IN)"),
@@ -418,20 +453,14 @@ async def upload_documents(
                 try:
                     db.commit()
                     track_document_upload(file_type)
-                    # ============================================
-                    # 🆕 TRIGGER SUMMARY UPDATE (NEW!)
-                    # ============================================
+                    # ⚡ CLEAR QUERY CACHE FOR COLLECTION (INVALIDATE STALE CACHE)
                     try:
-                        summary_service = CollectionSummaryService(db)
-                        summary_service.trigger_summary_update(
-                            collection_id=str(collection_id),
-                            user_id=user_uuid
-                        )
-                        logger.info(f"✅ Summary update triggered for collection {collection_name}")
-                    except Exception as summary_error:
-                        # Don't fail the upload if summary generation fails
-                        logger.warning(f"⚠️ Summary update failed: {summary_error}")
-                        
+                        db.execute(text("DELETE FROM query_cache WHERE collection_id = :cid"), {"cid": str(collection_id)})
+                        db.commit()
+                        logger.info(f"⚡ Cleared query cache for collection {collection_id}")
+                    except Exception as cache_clear_err:
+                        logger.warning(f"⚠️ Cache clear error: {cache_clear_err}")
+
                     # ✅ ADD UPLOAD DURATION
                     upload_duration = time.time() - upload_start_time
                     track_upload_duration(file_type, upload_duration) 
@@ -512,20 +541,21 @@ async def upload_documents(
         successful = len([r for r in results if r['status'] == 'success'])
         failed = len([r for r in results if r['status'] == 'failed'])
         logger.info(f"🎉 Complete: {successful} successful, {failed} failed")
-        # Trigger summary update ONCE after all files processed
-        # Only if at least one file succeeded
+        # Trigger summary update in BACKGROUND (non-blocking)
         if successful > 0:
-            try:
-                logger.info(f"🔄 Updating summary for collection '{collection_name}'")
-                summary_service = CollectionSummaryService(db)
-                summary_service.trigger_summary_update(
-                    collection_id=str(collection_id),
-                    user_id=user_uuid
-                )
-                logger.info(f"✅ Summary updated successfully")
-            except Exception as summary_error:
-                # Don't fail the upload if summary generation fails
-                logger.warning(f"⚠️ Summary update failed (non-critical): {summary_error}")
+            def _bg_summary(cid: str, uid: str):
+                try:
+                    from db import SessionLocal
+                    bg_db = SessionLocal()
+                    summary_service = CollectionSummaryService(bg_db)
+                    summary_service.trigger_summary_update(collection_id=cid, user_id=uid)
+                    bg_db.close()
+                    logger.info(f"✅ Background summary updated for collection {cid}")
+                except Exception as bg_err:
+                    logger.warning(f"⚠️ Background summary update failed: {bg_err}")
+            
+            background_tasks.add_task(_bg_summary, str(collection_id), user_uuid)
+            logger.info(f"⚡ Scheduled background summary update for collection {collection_name}")
         
         return results[0] if len(results) == 1 else {"results": results}
 

@@ -220,11 +220,43 @@ def init_db():
         # ------------------- SYSTEM LOGS -----------------------
         conn.execute(text("""
         CREATE TABLE IF NOT EXISTS system_logs (
-            id BIGSERIAL PRIMARY KEY,
-            user_id UUID,
-            event_type TEXT,
-            details JSONB,
-            timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+            id UUID PRIMARY KEY,
+            level TEXT NOT NULL,
+            message TEXT NOT NULL,
+            module TEXT,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+        """))
+
+        # ------------------- ASYNC JOBS -----------------------
+        conn.execute(text("""
+        CREATE TABLE IF NOT EXISTS jobs (
+            id UUID PRIMARY KEY,
+            user_id UUID REFERENCES users(id),
+            collection_id UUID REFERENCES collections(id),
+            file_name TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'processing',
+            progress_pct INT DEFAULT 0,
+            total_chunks INT DEFAULT 0,
+            error_message TEXT,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+        """))
+
+        # ------------------- QUERY CACHE -----------------------
+        conn.execute(text("""
+        CREATE TABLE IF NOT EXISTS query_cache (
+            id UUID PRIMARY KEY,
+            collection_id UUID REFERENCES collections(id),
+            user_id UUID REFERENCES users(id),
+            query_hash TEXT NOT NULL,
+            query_text TEXT NOT NULL,
+            response_text TEXT NOT NULL,
+            sources_used TEXT,
+            reference_map TEXT,
+            hit_count INT DEFAULT 1,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
         );
         """))
 

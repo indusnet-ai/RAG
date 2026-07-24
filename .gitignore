@@ -9,6 +9,7 @@ rag_local.db
 uploaded_files/
 logs/
 *.log
+google_credentials.json
 
 # macOS system files
 .DS_Store
