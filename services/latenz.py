@@ -58,13 +58,60 @@ class ConsoleExporter:
         logger.info("⚡ Latenz Report Exported [%s]", report.get('request_id'))
 
 
+import threading
+import json
+import urllib.request
+
+class HttpWebhookExporter:
+    """Pushes real-time Latenz telemetry to local desktop GUI webhook (http://127.0.0.1:8765/telemetry)"""
+    
+    def __init__(self, url: str = "http://127.0.0.1:8765/telemetry"):
+        self.url = url
+
+    def export(self, report: Dict[str, Any]):
+        def _post_payload():
+            try:
+                payload = json.dumps(report).encode("utf-8")
+                req = urllib.request.Request(
+                    self.url,
+                    data=payload,
+                    headers={"Content-Type": "application/json"},
+                    method="POST"
+                )
+                with urllib.request.urlopen(req, timeout=2.0) as resp:
+                    pass
+            except Exception as err:
+                logger.debug("HttpWebhookExporter webhook push skipped (GUI listener inactive): %s", err)
+
+        # Asynchronous non-blocking thread to prevent adding overhead to RAG query latency
+        t = threading.Thread(target=_post_payload, daemon=True)
+        t.start()
+
+
+class MultiExporter:
+    """Dispatches telemetry reports to multiple registered exporters simultaneously"""
+
+    def __init__(self, exporters: List[Any]):
+        self.exporters = exporters
+
+    def export(self, report: Dict[str, Any]):
+        for exp in self.exporters:
+            try:
+                exp.export(report)
+            except Exception as err:
+                logger.warning("Exporter failed: %s", err)
+
+
 class LatenzWrapper:
     """Wrapper for OpenAI Client Instance providing latency tracking and remediation"""
 
     def __init__(self, openai_client: Any, auto_remediate: bool = True, exporter: Optional[Any] = None):
         self._client = openai_client
         self.auto_remediate = auto_remediate
-        self.exporter = exporter or ConsoleExporter()
+        self.exporter = exporter or MultiExporter([
+            ConsoleExporter(),
+            HttpWebhookExporter(url="http://127.0.0.1:8765/telemetry")
+        ])
         self.chat = self._ChatWrapper(self)
         self.embeddings = getattr(openai_client, "embeddings", None)
 
@@ -203,9 +250,15 @@ class LatenzWrapper:
                     return response
 
 
-def wrap_openai(client: Any, auto_remediate: bool = True, exporter: Optional[Any] = None) -> LatenzWrapper:
+def wrap_openai(client: Any, auto_remediate: bool = True, exporter: Optional[Any] = None, webhook_url: str = "http://127.0.0.1:8765/telemetry") -> LatenzWrapper:
     """
     Wraps an OpenAI client instance with Latenz latency and payload diagnostics.
+    Pushes to both ConsoleExporter and HttpWebhookExporter.
     """
-    logger.info("⚡ Latenz diagnostic wrapper attached to OpenAI client (auto_remediate=%s)", auto_remediate)
-    return LatenzWrapper(client, auto_remediate=auto_remediate, exporter=exporter or ConsoleExporter())
+    if exporter is None:
+        exporter = MultiExporter([
+            ConsoleExporter(),
+            HttpWebhookExporter(url=webhook_url)
+        ])
+    logger.info("⚡ Latenz diagnostic wrapper attached to OpenAI client (Console + Webhook: %s)", webhook_url)
+    return LatenzWrapper(client, auto_remediate=auto_remediate, exporter=exporter)
