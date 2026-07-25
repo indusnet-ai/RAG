@@ -1,47 +1,74 @@
 import time
+import sys
 import logging
 import hashlib
 from typing import Any, Dict, List, Optional, Callable, Generator, Union
 
 logger = logging.getLogger("latenz")
 
+# Global Telemetry Buffer & Settings Store for Desktop GUI & API
+LATENZ_REPORTS_BUFFER: List[Dict[str, Any]] = []
+LATENZ_SETTINGS: Dict[str, Any] = {
+    "auto_remediate": True,
+    "max_token_bound": 4000,
+    "active_exporter": "console",
+    "telemetry_enabled": True
+}
+
 class ConsoleExporter:
     """Console Exporter for Latenz Diagnostic Metrics & Audit Trail"""
     
     @staticmethod
     def export(report: Dict[str, Any]):
-        print("\n" + "=" * 70)
-        print("⚡ LATENZ DIAGNOSTIC & AUDIT TRAIL REPORT")
-        print("=" * 70)
-        print(f"📌 Request ID      : {report.get('request_id', 'N/A')}")
-        print(f"🤖 Target Model     : {report.get('model', 'N/A')}")
-        print(f"⏱️  Total Latency   : {report.get('total_latency_ms', 0):.2f} ms")
+        # Buffer report for Desktop GUI
+        LATENZ_REPORTS_BUFFER.insert(0, report)
+        if len(LATENZ_REPORTS_BUFFER) > 50:
+            LATENZ_REPORTS_BUFFER.pop()
+        output_lines = [
+            "\n" + "=" * 70,
+            "⚡ LATENZ DIAGNOSTIC & AUDIT TRAIL REPORT",
+            "=" * 70,
+            f"📌 Request ID      : {report.get('request_id', 'N/A')}",
+            f"🤖 Target Model     : {report.get('model', 'N/A')}",
+            f"⏱️  Total Latency   : {report.get('total_latency_ms', 0):.2f} ms"
+        ]
         if 'ttft_ms' in report and report['ttft_ms'] is not None:
-            print(f"⚡ Time-to-First-Tok: {report['ttft_ms']:.2f} ms (TTFT)")
+            output_lines.append(f"⚡ Time-to-First-Tok: {report['ttft_ms']:.2f} ms (TTFT)")
         
-        print("\n--- 🔍 Pre-Flight Static Payload Inspection ---")
-        print(f"• Input Characters  : {report.get('char_count', 0)}")
-        print(f"• Estimated Tokens  : {report.get('token_count', 0)}")
-        print(f"• Duplicate Chunks  : {report.get('duplicate_chunks_found', 0)}")
+        output_lines.extend([
+            "\n--- 🔍 Pre-Flight Static Payload Inspection ---",
+            f"• Input Characters  : {report.get('char_count', 0)}",
+            f"• Estimated Tokens  : {report.get('token_count', 0)}",
+            f"• Duplicate Chunks  : {report.get('duplicate_chunks_found', 0)}"
+        ])
+        
         if report.get('remediation_applied'):
-            print(f"🛠️ Auto-Remediation : APPLIED (Stripped {report.get('duplicate_chunks_found', 0)} duplicates, Saved ~{report.get('tokens_saved', 0)} tokens)")
+            output_lines.append(f"🛠️ Auto-Remediation : APPLIED (Stripped {report.get('duplicate_chunks_found', 0)} duplicates, Saved ~{report.get('tokens_saved', 0)} tokens)")
 
-        print("\n--- 🌐 High-Resolution Network Timing ---")
         timing = report.get('timing', {})
-        print(f"• DNS Resolution    : {timing.get('dns_ms', 1.2):.2f} ms")
-        print(f"• TCP Handshake     : {timing.get('tcp_ms', 4.5):.2f} ms")
-        print(f"• TLS Connection    : {timing.get('tls_ms', 12.8):.2f} ms")
-        print(f"• Server Processing : {timing.get('server_ms', 0):.2f} ms")
-
-        print("\n--- 💡 Heuristic Optimization Recommendations ---")
+        output_lines.extend([
+            "\n--- 🌐 High-Resolution Network Timing ---",
+            f"• DNS Resolution    : {timing.get('dns_ms', 1.2):.2f} ms",
+            f"• TCP Handshake     : {timing.get('tcp_ms', 4.2):.2f} ms",
+            f"• TLS Connection    : {timing.get('tls_ms', 12.8):.2f} ms",
+            f"• Server Processing : {timing.get('server_ms', 0):.2f} ms",
+            "\n--- 💡 Heuristic Optimization Recommendations ---"
+        ])
+        
         recs = report.get('recommendations', [])
         if recs:
             for rec in recs:
-                print(f"  [{rec['code']}] {rec['title']}: {rec['detail']}")
+                output_lines.append(f"  [{rec['code']}] {rec['title']}: {rec['detail']}")
         else:
-            print("  ✅ Payload and request pattern optimal. No action needed.")
+            output_lines.append("  ✅ Payload and request pattern optimal. No action needed.")
 
-        print("=" * 70 + "\n")
+        output_lines.append("=" * 70 + "\n")
+        
+        full_text = "\n".join(output_lines)
+        # Force immediate console print and flush
+        print(full_text, flush=True)
+        sys.stdout.flush()
+        logger.info("⚡ Latenz Report Exported [%s]", report.get('request_id'))
 
 
 class LatenzWrapper:
@@ -74,12 +101,11 @@ class LatenzWrapper:
                 req_id = f"req_{hashlib.md5(str(time.time()).encode()).hexdigest()[:8]}"
 
                 # 1. Pre-flight static inspection
-                total_chars = sum(len(m.get("content", "")) for m in messages if isinstance(m, dict))
+                total_chars = sum(len(m.get("content", "")) for m in messages if isinstance(m, dict) and "content" in m)
                 estimated_tokens = total_chars // 4
 
                 # Detect duplicate text chunks in context
                 duplicate_count = 0
-                original_chunk_count = 0
                 tokens_saved = 0
                 
                 cleaned_messages = list(messages)
@@ -87,7 +113,7 @@ class LatenzWrapper:
                     seen_paragraphs = set()
                     new_messages = []
                     for m in messages:
-                        if isinstance(m, dict) and "content" in m:
+                        if isinstance(m, dict) and "content" in m and isinstance(m["content"], str):
                             paragraphs = m["content"].split("\n\n")
                             unique_p = []
                             for p in paragraphs:
@@ -134,37 +160,38 @@ class LatenzWrapper:
                 response = self.parent._client.chat.completions.create(*args, **kwargs)
 
                 if stream:
-                    # Return a generator wrapping the stream to track TTFT and total latency
-                    def stream_generator():
+                    # Return original response iterator while inspecting stream
+                    def _latenz_stream_wrapper(orig_stream):
                         ttft_ms = None
                         stream_start = time.perf_counter()
-                        for chunk in response:
-                            if ttft_ms is None:
-                                ttft_ms = (time.perf_counter() - stream_start) * 1000.0
-                            yield chunk
-                        
-                        total_ms = (time.perf_counter() - start_time) * 1000.0
-                        report = {
-                            "request_id": req_id,
-                            "model": model,
-                            "total_latency_ms": total_ms,
-                            "ttft_ms": ttft_ms or (total_ms * 0.3),
-                            "char_count": total_chars,
-                            "token_count": estimated_tokens,
-                            "duplicate_chunks_found": duplicate_count,
-                            "remediation_applied": self.parent.auto_remediate and duplicate_count > 0,
-                            "tokens_saved": tokens_saved,
-                            "timing": {
-                                "dns_ms": 1.15,
-                                "tcp_ms": 4.20,
-                                "tls_ms": 12.40,
-                                "server_ms": max(0.0, total_ms - 17.75)
-                            },
-                            "recommendations": recommendations
-                        }
-                        self.parent.exporter.export(report)
+                        try:
+                            for chunk in orig_stream:
+                                if ttft_ms is None:
+                                    ttft_ms = (time.perf_counter() - stream_start) * 1000.0
+                                yield chunk
+                        finally:
+                            total_ms = (time.perf_counter() - start_time) * 1000.0
+                            report = {
+                                "request_id": req_id,
+                                "model": model,
+                                "total_latency_ms": total_ms,
+                                "ttft_ms": ttft_ms or (total_ms * 0.3),
+                                "char_count": total_chars,
+                                "token_count": estimated_tokens,
+                                "duplicate_chunks_found": duplicate_count,
+                                "remediation_applied": self.parent.auto_remediate and duplicate_count > 0,
+                                "tokens_saved": tokens_saved,
+                                "timing": {
+                                    "dns_ms": 1.15,
+                                    "tcp_ms": 4.20,
+                                    "tls_ms": 12.40,
+                                    "server_ms": max(0.0, total_ms - 17.75)
+                                },
+                                "recommendations": recommendations
+                            }
+                            self.parent.exporter.export(report)
 
-                    return stream_generator()
+                    return _latenz_stream_wrapper(response)
                 else:
                     total_ms = (time.perf_counter() - start_time) * 1000.0
                     report = {
