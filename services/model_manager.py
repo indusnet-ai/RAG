@@ -67,7 +67,14 @@ class ModelManager:
                 api_key_env = (openai_llm or openai_embedding)['api_key_env']
                 openai_key = os.getenv(api_key_env)
                 if openai_key:
-                    self.openai_client = OpenAI(api_key=openai_key)
+                    raw_client = OpenAI(api_key=openai_key)
+                    try:
+                        from services import latenz
+                        self.openai_client = latenz.wrap_openai(raw_client, auto_remediate=True)
+                        logger.info("⚡ OpenAI client wrapped with Latenz diagnostic middleware")
+                    except Exception as latenz_err:
+                        logger.warning(f"⚠️ Failed to wrap with Latenz: {latenz_err}, using raw OpenAI client")
+                        self.openai_client = raw_client
                     logger.info("OpenAI client initialized")
                 else:
                     logger.warning(f"OpenAI API key not found in environment variable: {api_key_env}")
