@@ -6,24 +6,11 @@ from typing import Any, Dict, List, Optional, Callable, Generator, Union
 
 logger = logging.getLogger("latenz")
 
-# Global Telemetry Buffer & Settings Store for Desktop GUI & API
-LATENZ_REPORTS_BUFFER: List[Dict[str, Any]] = []
-LATENZ_SETTINGS: Dict[str, Any] = {
-    "auto_remediate": True,
-    "max_token_bound": 4000,
-    "active_exporter": "console",
-    "telemetry_enabled": True
-}
-
 class ConsoleExporter:
     """Console Exporter for Latenz Diagnostic Metrics & Audit Trail"""
     
     @staticmethod
     def export(report: Dict[str, Any]):
-        # Buffer report for Desktop GUI
-        LATENZ_REPORTS_BUFFER.insert(0, report)
-        if len(LATENZ_REPORTS_BUFFER) > 50:
-            LATENZ_REPORTS_BUFFER.pop()
         output_lines = [
             "\n" + "=" * 70,
             "⚡ LATENZ DIAGNOSTIC & AUDIT TRAIL REPORT",

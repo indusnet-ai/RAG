@@ -258,8 +258,6 @@ app.include_router(edit_query_router, dependencies=[Depends(get_current_user)])
 app.include_router(share_chat_router)
 app.include_router(ragas_router, dependencies=[Depends(get_current_user)])  # ✅ ADD THIS
 app.include_router(web_discovery.router, dependencies=[Depends(get_current_user)])
-from routers.latenz_telemetry import router as latenz_telemetry_router
-app.include_router(latenz_telemetry_router)
 
 @app.get("/metrics")
 def metrics():
