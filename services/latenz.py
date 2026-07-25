@@ -6,11 +6,16 @@ from typing import Any, Dict, List, Optional, Callable, Generator, Union
 
 logger = logging.getLogger("latenz")
 
+LATENZ_REPORTS_BUFFER: List[Dict[str, Any]] = []
+
 class ConsoleExporter:
     """Console Exporter for Latenz Diagnostic Metrics & Audit Trail"""
     
     @staticmethod
     def export(report: Dict[str, Any]):
+        LATENZ_REPORTS_BUFFER.insert(0, report)
+        if len(LATENZ_REPORTS_BUFFER) > 50:
+            LATENZ_REPORTS_BUFFER.pop()
         output_lines = [
             "\n" + "=" * 70,
             "⚡ LATENZ DIAGNOSTIC & AUDIT TRAIL REPORT",
