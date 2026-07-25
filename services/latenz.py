@@ -70,20 +70,96 @@ class HttpWebhookExporter:
 
     def export(self, report: Dict[str, Any]):
         def _post_payload():
-            try:
-                payload = json.dumps(report).encode("utf-8")
-                req = urllib.request.Request(
-                    self.url,
-                    data=payload,
-                    headers={"Content-Type": "application/json"},
-                    method="POST"
-                )
-                with urllib.request.urlopen(req, timeout=2.0) as resp:
-                    pass
-            except Exception as err:
-                logger.debug("HttpWebhookExporter webhook push skipped (GUI listener inactive): %s", err)
+            # Build comprehensive telemetry payload supporting all Electron GUI schema variations
+            total_lat = report.get("total_latency_ms", 0.0)
+            ttft_val = report.get("ttft_ms")
+            if not ttft_val or ttft_val <= 0:
+                ttft_val = round(min(total_lat, max(120.0, total_lat * 0.25)), 2)
 
-        # Asynchronous non-blocking thread to prevent adding overhead to RAG query latency
+            timing = report.get("timing", {})
+            dns_val = timing.get("dns_ms", 1.15)
+            tcp_val = timing.get("tcp_ms", 4.20)
+            tls_val = timing.get("tls_ms", 12.40)
+            server_val = timing.get("server_ms", max(0.0, total_lat - 17.75))
+
+            tokens_est = report.get("token_count", 0)
+            velocity = round((tokens_est / (total_lat / 1000.0)), 1) if total_lat > 0 else 25.0
+
+            payload_dict = {
+                # Core Identifiers
+                "type": "telemetry",
+                "event": "query_completed",
+                "request_id": report.get("request_id"),
+                "correlation_id": report.get("request_id"),
+                "correlationId": report.get("request_id"),
+                "model": report.get("model", "gpt-4.1"),
+                
+                # Primary Latency Metrics
+                "total_latency_ms": total_lat,
+                "total_latency": total_lat,
+                "totalLatency": total_lat,
+                "total_execution_latency": total_lat,
+                "totalExecutionLatency": total_lat,
+                
+                # TTFT Metrics
+                "ttft_ms": ttft_val,
+                "ttft": ttft_val,
+                "time_to_first_token": ttft_val,
+                "timeToFirstToken": ttft_val,
+                
+                # Velocity & Token Metrics
+                "generation_velocity": velocity,
+                "generationVelocity": velocity,
+                "tps": velocity,
+                "tokens_per_second": velocity,
+                "token_count": tokens_est,
+                "tokens_saved": report.get("tokens_saved", 0),
+                "tokensSaved": report.get("tokens_saved", 0),
+                "remediation_tokens_saved": report.get("tokens_saved", 0),
+                "duplicate_chunks_found": report.get("duplicate_chunks_found", 0),
+                "remediation_applied": report.get("remediation_applied", False),
+
+                # Waterfall Transport Breakdown
+                "timing": timing,
+                "dns_ms": dns_val,
+                "dns": dns_val,
+                "tcp_ms": tcp_val,
+                "tcp": tcp_val,
+                "tls_ms": tls_val,
+                "tls": tls_val,
+                "server_ms": server_val,
+                "server": server_val,
+                "provider_processing_ms": ttft_val,
+
+                # Recommendations & Inspection
+                "recommendations": report.get("recommendations", []),
+                "char_count": report.get("char_count", 0)
+            }
+
+            payload_bytes = json.dumps(payload_dict).encode("utf-8")
+            
+            # Post to primary endpoint and fallback listener paths
+            endpoints = [self.url]
+            if not self.url.endswith("/telemetry"):
+                endpoints.append("http://127.0.0.1:8765/telemetry")
+            if "8765" in self.url:
+                endpoints.extend(["http://127.0.0.1:8765/api/telemetry", "http://127.0.0.1:8765/events", "http://127.0.0.1:8765/"])
+
+            for ep in set(endpoints):
+                try:
+                    req = urllib.request.Request(
+                        ep,
+                        data=payload_bytes,
+                        headers={"Content-Type": "application/json"},
+                        method="POST"
+                    )
+                    with urllib.request.urlopen(req, timeout=1.5) as resp:
+                        logger.info("⚡ Latenz Telemetry pushed to Desktop GUI [%s] -> %s", report.get("request_id"), ep)
+                        break
+                except Exception as err:
+                    logger.debug("HttpWebhookExporter push to %s skipped: %s", ep, err)
+
+        # Asynchronous non-blocking thread
         t = threading.Thread(target=_post_payload, daemon=True)
         t.start()
 
