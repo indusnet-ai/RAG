@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Latenz Enterprise Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app" class="app-container">
+    
+    <header class="app-header">
+      <div class="brand-section">
+        <div class="brand-logo">⚡</div>
+        <div class="brand-text">
+          <h1>Latenz <span class="badge-v1">ENTERPRISE v1.0</span></h1>
+          <p class="brand-tagline">Real-Time LLM Diagnostic & Optimization Middleware</p>
+        </div>
+      </div>
+      
+      <div class="status-bar">
+        <div class="status-indicator live" id="connectionStatus">
+          <span class="pulse-dot"></span>
+          <span class="status-text">Ingestion Active (127.0.0.1:8000)</span>
+        </div>
+        <div class="system-clock" id="systemClock">00:00:00</div>
+      </div>
+    </header>
+
+    <main class="dashboard-grid">
+      <section class="panel waterfall-panel">
+        <div class="panel-header">
+          <h2>🎯 Live Latency Transport Waterfall Breakdown</h2>
+          <span class="refresh-pill" id="lastRefreshTime">Refreshed 0s ago</span>
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-label">TIME TO FIRST TOKEN (TTFT)</div>
+            <div class="kpi-value text-accent" id="kpiTTFT">0.0 ms</div>
+            <div class="kpi-subtext">Target: &lt; 400ms (Optimal)</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">GENERATION VELOCITY</div>
+            <div class="kpi-value text-success" id="kpiVelocity">0.0 tps</div>
+            <div class="kpi-subtext">Tokens per second</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">TOTAL EXECUTION LATENCY</div>
+            <div class="kpi-value text-warning" id="kpiAvgLatency">0.0 ms</div>
+            <div class="kpi-subtext">End-to-end processing</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">TOKENS SAVED (SELF-HEALING)</div>
+            <div class="kpi-value text-accent" id="kpiTokensSaved">0 tokens</div>
+            <div class="kpi-subtext">Active remediation cost savings</div>
+          </div>
+        </div>
+
+        <div class="waterfall-container">
+          <h3 class="section-subtitle">Transport Stage Timing Breakdown (Latest Query)</h3>
+          <div class="waterfall-bars" id="waterfallBars">
+            <div class="bar-row">
+              <span class="bar-label">DNS Lookup Resolution</span>
+              <div class="bar-track"><div class="bar-fill dns-fill" style="width: 8%;"></div></div>
+              <span class="bar-value" id="dnsVal">1.2 ms</span>
+            </div>
+            <div class="bar-row">
+              <span class="bar-label">TCP Connection Handshake</span>
+              <div class="bar-track"><div class="bar-fill tcp-fill" style="width: 15%;"></div></div>
+              <span class="bar-value" id="tcpVal">4.2 ms</span>
+            </div>
+            <div class="bar-row">
+              <span class="bar-label">TLS Security Negotiation</span>
+              <div class="bar-track"><div class="bar-fill tls-fill" style="width: 25%;"></div></div>
+              <span class="bar-value" id="tlsVal">12.8 ms</span>
+            </div>
+            <div class="bar-row">
+              <span class="bar-label">TTFT (Time-to-First-Tok / Provider Processing)</span>
+              <div class="bar-track"><div class="bar-fill ttft-fill" style="width: 60%;"></div></div>
+              <span class="bar-value" id="ttftVal">145.0 ms</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="recent-feed">
+          <h3 class="section-subtitle">Real-Time Ingestion Audit Feed</h3>
+          <div class="feed-list" id="feedList">
+            <div class="feed-placeholder">Waiting for RAG completion telemetry...</div>
+          </div>
+        </div>
+      </section>
+
+      <div class="side-column">
+        <section class="panel inspector-panel">
+          <div class="panel-header">
+            <h2>🔍 Pre-Flight Payload Inspector</h2>
+          </div>
+          <div class="inspector-details">
+            <div class="inspector-stat">
+              <span>Input Character Volume</span>
+              <strong id="inspChars">0 chars</strong>
+            </div>
+            <div class="inspector-stat">
+              <span>Estimated Token Volume</span>
+              <strong id="inspTokens">0 tokens</strong>
+            </div>
+            <div class="inspector-stat">
+              <span>Duplicate Chunks Detected</span>
+              <span class="badge-success" id="inspDuplicates">0 duplicates</span>
+            </div>
+            <div class="inspector-stat">
+              <span>Self-Healing Remediation</span>
+              <span class="badge-success" id="inspRemediation">ACTIVE</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel heuristic-panel">
+          <div class="panel-header">
+            <h2>💡 Heuristic Action Center</h2>
+          </div>
+          <div class="heuristic-cards">
+            <div class="heuristic-card opt-002">
+              <div class="card-title">
+                <span class="opt-code">LATENZ_OPT_002</span>
+                <strong>Context Pruning</strong>
+              </div>
+              <p class="card-desc">Reduces prompt token payload by stripping redundant RAG context chunks.</p>
+            </div>
+            
+            <div class="heuristic-card opt-005">
+              <div class="card-title">
+                <span class="opt-code">LATENZ_OPT_005</span>
+                <strong>Prompt Caching</strong>
+              </div>
+              <p class="card-desc">Structures system prompts for automatic prefix caching to reduce latency.</p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="app-footer">
+      <div class="footer-left">
+        <span>⚡ Latenz Enterprise Telemetry Listener Active</span>
+      </div>
+      <div class="footer-right">
+        <span>Connected to FastAPI 127.0.0.1:8000</span>
+      </div>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

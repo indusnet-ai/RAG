@@ -88,6 +88,10 @@ if not os.path.exists(uploaded_files_path):
     os.makedirs(uploaded_files_path)
 app.mount("/uploaded_files", StaticFiles(directory=uploaded_files_path), name="uploaded_files")
 
+latenz_gui_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "latenz-desktop-gui"))
+if os.path.exists(latenz_gui_path):
+    app.mount("/latenz-gui", StaticFiles(directory=latenz_gui_path, html=True), name="latenz_gui")
+
 # -------------------------------------
 # API Timing Middleware
 # -------------------------------------
@@ -260,6 +264,11 @@ app.include_router(ragas_router, dependencies=[Depends(get_current_user)])  # âœ
 app.include_router(web_discovery.router, dependencies=[Depends(get_current_user)])
 from routers.latenz_telemetry import router as latenz_telemetry_router
 app.include_router(latenz_telemetry_router)
+
+from fastapi.staticfiles import StaticFiles
+gui_dir = os.path.join(os.path.dirname(__file__), "latenz_gui")
+if os.path.exists(gui_dir):
+    app.mount("/latenz", StaticFiles(directory=gui_dir, html=True), name="latenz_gui")
 
 @app.get("/metrics")
 def metrics():
